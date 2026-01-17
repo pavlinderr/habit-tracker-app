@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #151520;
+            --bg-tertiary: #1f1f2e;
+            --accent: #7c3aed;
+            --accent-dark: #5b21b6;
+            --text-primary: #e5e5e5;
+            --text-secondary: #a1a1aa;
+            --success: #10b981;
+            --border: #27273a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .date {
+            font-size: 14px;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .habits-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .habit-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .habit-card:hover {
+            border-color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .habit-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .streak-badge {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .progress-container {
+            margin-bottom: 16px;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, #a78bfa 100%);
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.filled {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .habit-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+        }
+
+        .add-habit-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .add-habit-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+
+        .ai-coach-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--accent);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .ai-coach-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ai-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .ai-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Habit Tracker</h1>
+            <div class="date" id="currentDate"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalHabits">0</div>
+                <div class="stat-label">Habits</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCompletions">0</div>
+                <div class="stat-label">Done</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="bestStreak">0</div>
+                <div class="stat-label">Best Streak</div>
+            </div>
+        </div>
+
+        <div class="ai-coach-section">
+            <div class="ai-header">
+                <div class="ai-icon">🤖</div>
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">AI Coach</div>
+                </div>
+            </div>
+            <div class="ai-text" id="aiAdvice">
+                Add your first habit to get personalized coaching! 🚀
+            </div>
+        </div>
+
+        <button class="add-habit-btn" onclick="openAddModal()">
+            <span>➕</span>
+            <span>Add New Habit</span>
+        </button>
+
+        <div class="habits-section">
+            <div class="section-title">
+                <span>📋</span>
+                <span>Today's Habits</span>
+            </div>
+            <div id="habitsList"></div>
+        </div>
+    </div>
+
+    <!-- Add Habit Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-title">Add New Habit</div>
+            <div class="form-group">
+                <label class="form-label">Habit Name</label>
+                <input type="text" class="form-input" id="habitInput" placeholder="e.g., Morning Exercise">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addHabit()">
+                    <span>Add Habit</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.MainButton.hide();
+
+        // Data storage
+        let habits = JSON.parse(localStorage.getItem('habits') || '[]');
+        let completions = JSON.parse(localStorage.getItem('completions') || '{}');
+
+        // AI Tips database
+        const aiTips = {
+            welcome: [
+                "🌟 Start small! Building one solid habit is better than failing at ten.",
+                "💡 Pro tip: Stack new habits with existing ones for better success!",
+                "🎯 Focus on consistency over perfection. Missing one day won't break you!",
+                "⚡ Your brain forms habits in 21-66 days. Stay patient and persistent!"
+            ],
+            low_completion: [
+                "💪 Don't give up! Every expert was once a beginner who didn't quit.",
+                "🎯 Try reducing habit difficulty - start with just 2 minutes a day!",
+                "✨ Pair struggling habits with ones you already do consistently.",
+                "🚀 Break your habit into smaller steps - make it impossible to fail!"
+            ],
+            medium_completion: [
+                "📈 Solid progress! You're building real momentum here!",
+                "🔥 Keep this energy! You're closer to automatic habits than you think.",
+                "💎 Consistency is showing! The results compound over time.",
+                "⭐ You're in the growth zone - this is where magic happens!"
+            ],
+            high_completion: [
+                "🏆 Incredible discipline! You're in the top 5% of people!",
+                "🌟 You're crushing it! These habits are becoming your identity.",
+                "👑 Legend status! Your consistency is truly inspiring!",
+                "💯 This is excellence! Keep showing others what's possible!"
+            ],
+            streak_milestone: {
+                3: "🔥 3-day streak! The hardest part is behind you!",
+                7: "🏆 Full week! You're building serious momentum!",
+                14: "💎 Two weeks! This is becoming automatic!",
+                21: "🎊 21 days! Scientifically, this is now a habit!",
+                30: "👑 Full month! You've transformed your life!"
+            }
+        };
+
+        // Initialize
+        updateDate();
+        renderHabits();
+        updateStats();
+        updateAIAdvice();
+
+        function updateDate() {
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = 
+                new Date().toLocaleDateString('en-US', options);
+        }
+
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getHabitProgress(habitId) {
+            const today = new Date();
+            let completed = 0;
+            let streak = 0;
+
+            for (let i = 0; i < 10; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                const key = `${habitId}_${dateKey}`;
+
+                if (completions[key]) {
+                    completed++;
+                    if (i === streak) streak++;
+                } else if (dateKey !== getTodayKey() && i === streak) {
+                    break;
+                }
+            }
+
+            return { completed, streak };
+        }
+
+        function renderHabits() {
+            const container = document.getElementById('habitsList');
+            
+            if (habits.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <div>No habits yet. Add your first one!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = habits.map((habit, index) => {
+                const { completed, streak } = getHabitProgress(habit.id);
+                const progress = (completed / 10) * 100;
+                const todayKey = `${habit.id}_${getTodayKey()}`;
+                const isDone = completions[todayKey];
+
+                const dots = Array.from({ length: 10 }, (_, i) => {
+                    return `<div class="progress-dot ${i < completed ? 'filled' : ''}"></div>`;
+                }).join('');
+
+                return `
+                    <div class="habit-card" style="animation-delay: ${index * 0.1}s">
+                        <div class="habit-header">
+                            <div class="habit-name">${habit.name}</div>
+                            ${streak > 0 ? `
+                                <div class="streak-badge">
+                                    🔥 ${streak} day${streak > 1 ? 's' : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-label">
+                                <span>Progress</span>
+                                <span>${completed}/10 days</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="progress-dots">${dots}</div>
+                        </div>
+                        <div class="habit-actions">
+                            ${!isDone ? `
+                                <button class="btn btn-primary" onclick="completeHabit('${habit.id}')">
+                                    <span>✓</span>
+                                    <span>Complete</span>
+                                </button>
+                                <button class="btn btn-secondary" onclick="skipHabit('${habit.id}')">
+                                    <span>⏭</span>
+                                </button>
+                            ` : `
+                                <button class="btn btn-success" disabled>
+                                    <span>✓</span>
+                                    <span>Completed Today!</span>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const totalHabits = habits.length;
+            let totalCompletions = 0;
+            let bestStreak = 0;
+
+            habits.forEach(habit => {
+                const { completed, streak } = getHabitProgress(habit.id);
+                totalCompletions += completed;
+                bestStreak = Math.max(bestStreak, streak);
+            });
+
+            document.getElementById('totalHabits').textContent = totalHabits;
+            document.getElementById('totalCompletions').textContent = totalCompletions;
+            document.getElementById('bestStreak').textContent = bestStreak;
+        }
+
+        function updateAIAdvice() {
+            const totalHabits = habits.length;
+            
+            if (totalHabits === 0) {
+                document.getElementById('aiAdvice').textContent = 
+                    aiTips.welcome[Math.floor(Math.random() * aiTips.welcome.length)];
+                return;
+            }
+
+            let totalCompleted = 0;
+            let maxStreak = 0;
+
+            habits.forEach(habit => {
+                const { completed, streak } = getHabitProgress(habit.id);
+                totalCompleted += completed;
+                maxStreak = Math.max(maxStreak, streak);
+            });
+
+            const avgCompletion = totalCompleted / (totalHabits * 10);
+            
+            // Check for streak milestones
+            if (aiTips.streak_milestone[maxStreak]) {
+                document.getElementById('aiAdvice').textContent = aiTips.streak_milestone[maxStreak];
+                return;
+            }
+
+            // Advice based on completion rate
+            let advice;
+            if (avgCompletion >= 0.7) {
+                advice = aiTips.high_completion;
+            } else if (avgCompletion >= 0.4) {
+                advice = aiTips.medium_completion;
+            } else {
+                advice = aiTips.low_completion;
+            }
+
+            document.getElementById('aiAdvice').textContent = 
+                advice[Math.floor(Math.random() * advice.length)];
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+            document.getElementById('habitInput').value = '';
+            document.getElementById('habitInput').focus();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        function addHabit() {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+
+            if (!name) {
+                tg.showAlert('Please enter a habit name');
+                return;
+            }
+
+            const habit = {
+                id: Date.now().toString(),
+                name: name,
+                createdAt: new Date().toISOString()
+            };
+
+            habits.push(habit);
+            localStorage.setItem('habits', JSON.stringify(habits));
+
+            closeAddModal();
+            renderHabits();
+            updateStats();
+            updateAIAdvice();
+
+            tg.showPopup({
+                title: '✅ Habit Added',
+                message: `"${name}" added successfully! Let's build that streak! 🔥`,
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function completeHabit(habitId) {
+            const todayKey = `${habitId}_${getTodayKey()}`;
+            completions[todayKey] = true;
+            localStorage.setItem('completions', JSON.stringify(completions));
+
+            const habit = habits.find(h => h.id === habitId);
+            const { streak } = getHabitProgress(habitId);
+
+            renderHabits();
+            updateStats();
+            updateAIAdvice();
+
+            const messages = [
+                `🎉 Great job! ${streak} day streak on "${habit.name}"!`,
+                `✨ Awesome! Keep that momentum on "${habit.name}"!`,
+                `💪 Well done! "${habit.name}" - ${streak} days strong!`,
+                `🔥 On fire! ${streak} day streak - you're unstoppable!`
+            ];
+
+            tg.showAlert(messages[Math.floor(Math.random() * messages.length)]);
+        }
+
+        function skipHabit(habitId) {
+            tg.showAlert('⏭ Skipped for today. Tomorrow is a fresh start! 💪');
+        }
+
+        // Handle Enter key in input
+        document.getElementById('habitInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addHabit();
+            }
+        });
+
+        // Close modal on background click
+        document.getElementById('addModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addModal') {
+                closeAddModal();
+            }
+        });
+    </script>
+</body>
+</html>
