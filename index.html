@@ -206,6 +206,44 @@
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             border-radius: 13px;
             padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .habit-wrapper {
+            position: relative;
+        }
+
+        .habit-content {
+            position: relative;
+            background: var(--elevated-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            touch-action: pan-y;
+        }
+
+        .habit-delete-action {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background: #FF3B30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 13px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .habit-wrapper.swiping .habit-delete-action {
+            opacity: 1;
         }
 
         .habit-header {
@@ -607,38 +645,44 @@
                 ).join('');
 
                 return `
-                    <div class="habit-item fade-in">
-                        <div class="habit-header">
-                            <div class="habit-title">${habit.name}</div>
-                            ${streak > 0 ? `<div class="habit-badge">${streak}d</div>` : ''}
-                        </div>
-                        <div class="progress-section">
-                            <div class="progress-header">
-                                <span class="progress-label">Progress</span>
-                                <span class="progress-label">${completed}/10</span>
+                    <div class="habit-wrapper fade-in" data-habit-id="${habit.id}">
+                        <div class="habit-delete-action">Delete</div>
+                        <div class="habit-content habit-item">
+                            <div class="habit-header">
+                                <div class="habit-title">${habit.name}</div>
+                                ${streak > 0 ? `<div class="habit-badge">${streak}d</div>` : ''}
                             </div>
-                            <div class="progress-track">
-                                <div class="progress-bar" style="width: ${progress}%"></div>
+                            <div class="progress-section">
+                                <div class="progress-header">
+                                    <span class="progress-label">Progress</span>
+                                    <span class="progress-label">${completed}/10</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-bar" style="width: ${progress}%"></div>
+                                </div>
+                                <div class="progress-dots">${dots}</div>
                             </div>
-                            <div class="progress-dots">${dots}</div>
-                        </div>
-                        <div class="habit-actions">
-                            ${!isDone ? `
-                                <button class="btn btn-primary" onclick="completeHabit('${habit.id}')">
-                                    Complete
-                                </button>
-                                <button class="btn btn-secondary" onclick="skipHabit('${habit.id}')">
-                                    Skip
-                                </button>
-                            ` : `
-                                <button class="btn btn-success" disabled>
-                                    ✓ Done
-                                </button>
-                            `}
+                            <div class="habit-actions">
+                                ${!isDone ? `
+                                    <button class="btn btn-primary" onclick="completeHabit('${habit.id}')">
+                                        Complete
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="skipHabit('${habit.id}')">
+                                        Skip
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-success" disabled>
+                                        ✓ Done
+                                    </button>
+                                `}
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            // Add swipe functionality
+            setTimeout(initSwipeToDelete, 100);
         }
 
         function updateStats() {
@@ -759,6 +803,106 @@
         document.getElementById('habitInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addHabit();
         });
+
+        // Swipe to delete functionality
+        function initSwipeToDelete() {
+            const wrappers = document.querySelectorAll('.habit-wrapper');
+            
+            wrappers.forEach(wrapper => {
+                const content = wrapper.querySelector('.habit-content');
+                const deleteBtn = wrapper.querySelector('.habit-delete-action');
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+
+                content.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    isDragging = true;
+                    content.style.transition = 'none';
+                });
+
+                content.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    
+                    currentX = e.touches[0].clientX;
+                    const diff = startX - currentX;
+                    
+                    // Only allow swipe left
+                    if (diff > 0 && diff <= 80) {
+                        content.style.transform = `translateX(-${diff}px)`;
+                        if (diff > 20) {
+                            wrapper.classList.add('swiping');
+                        }
+                    }
+                });
+
+                content.addEventListener('touchend', () => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    
+                    const diff = startX - currentX;
+                    content.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                    
+                    if (diff > 60) {
+                        // Show delete button
+                        content.style.transform = 'translateX(-80px)';
+                        wrapper.classList.add('swiping');
+                    } else {
+                        // Reset
+                        content.style.transform = 'translateX(0)';
+                        wrapper.classList.remove('swiping');
+                    }
+                });
+
+                // Click delete button
+                deleteBtn.addEventListener('click', () => {
+                    const habitId = wrapper.dataset.habitId;
+                    deleteHabit(habitId);
+                });
+
+                // Click elsewhere to close
+                document.addEventListener('click', (e) => {
+                    if (!wrapper.contains(e.target)) {
+                        content.style.transform = 'translateX(0)';
+                        wrapper.classList.remove('swiping');
+                    }
+                });
+            });
+        }
+
+        function deleteHabit(habitId) {
+            const habit = habits.find(h => h.id === habitId);
+            
+            tg.showPopup({
+                title: 'Delete Habit',
+                message: `Delete "${habit.name}"? This cannot be undone.`,
+                buttons: [
+                    {id: 'cancel', type: 'cancel', text: 'Cancel'},
+                    {id: 'delete', type: 'destructive', text: 'Delete'}
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'delete') {
+                    // Remove habit
+                    habits = habits.filter(h => h.id !== habitId);
+                    localStorage.setItem('habits', JSON.stringify(habits));
+                    
+                    // Remove completions
+                    Object.keys(completions).forEach(key => {
+                        if (key.startsWith(habitId + '_')) {
+                            delete completions[key];
+                        }
+                    });
+                    localStorage.setItem('completions', JSON.stringify(completions));
+                    
+                    // Update UI
+                    renderHabits();
+                    updateStats();
+                    updateAIAdvice();
+                    
+                    tg.showAlert('Habit deleted');
+                }
+            });
+        }
     </script>
 </body>
 </html>
