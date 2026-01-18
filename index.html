@@ -3,214 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Habit Tracker</title>
+    <title>Habits</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #151520;
-            --bg-tertiary: #1f1f2e;
-            --accent: #7c3aed;
-            --accent-dark: #5b21b6;
-            --text-primary: #e5e5e5;
-            --text-secondary: #a1a1aa;
-            --success: #10b981;
-            --border: #27273a;
+            --system-bg: #000000;
+            --elevated-bg: rgba(28, 28, 30, 0.64);
+            --fill-primary: rgba(120, 120, 128, 0.2);
+            --fill-secondary: rgba(120, 120, 128, 0.16);
+            --fill-tertiary: rgba(118, 118, 128, 0.12);
+            --label-primary: #FFFFFF;
+            --label-secondary: rgba(235, 235, 245, 0.6);
+            --label-tertiary: rgba(235, 235, 245, 0.3);
+            --separator: rgba(84, 84, 88, 0.65);
+            --blue: #0A84FF;
+            --green: #30D158;
+            --orange: #FF9F0A;
+        }
+
+        @supports (backdrop-filter: blur(20px)) {
+            :root {
+                --elevated-bg: rgba(28, 28, 30, 0.7);
+            }
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--system-bg);
+            color: var(--label-primary);
             min-height: 100vh;
-            padding: 20px;
-            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .container {
-            max-width: 600px;
+        .app-container {
+            max-width: 428px;
             margin: 0 auto;
+            padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
         }
 
-        .header {
-            margin-bottom: 32px;
-            animation: fadeInDown 0.6s ease-out;
+        /* Navigation Bar */
+        .nav-bar {
+            padding: 8px 0 24px 0;
         }
 
-        .header h1 {
-            font-size: 28px;
+        .nav-title {
+            font-size: 34px;
             font-weight: 700;
-            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+            letter-spacing: 0.37px;
+            line-height: 41px;
         }
 
-        .date {
-            font-size: 14px;
-            color: var(--text-secondary);
-            letter-spacing: 0.5px;
+        .nav-subtitle {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--label-secondary);
+            margin-top: 2px;
+            letter-spacing: -0.08px;
         }
 
-        .stats-grid {
+        /* Cards - Apple Style */
+        .card {
+            background: var(--elevated-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px;
+            overflow: hidden;
+        }
+
+        .card-divider {
+            height: 0.33px;
+            background: var(--separator);
+            margin: 0 16px;
+        }
+
+        /* Stats Grid */
+        .stats-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-            animation: fadeInUp 0.6s ease-out 0.1s both;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
         .stat-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
+            background: var(--elevated-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px;
+            padding: 16px 12px;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
         }
 
         .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 4px;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.36px;
+            line-height: 34px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
             font-size: 11px;
-            color: var(--text-secondary);
+            font-weight: 400;
+            color: var(--label-secondary);
+            letter-spacing: 0.06px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        .habits-section {
-            margin-bottom: 24px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
+        /* AI Section */
+        .ai-section {
+            background: linear-gradient(180deg, rgba(10, 132, 255, 0.15) 0%, rgba(10, 132, 255, 0.05) 100%);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px;
+            padding: 16px;
             margin-bottom: 16px;
+            border: 0.5px solid rgba(10, 132, 255, 0.2);
+        }
+
+        .ai-header {
             display: flex;
             align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .ai-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .ai-label {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.24px;
+        }
+
+        .ai-text {
+            font-size: 13px;
+            line-height: 18px;
+            color: var(--label-secondary);
+            letter-spacing: -0.08px;
+        }
+
+        /* Buttons - iOS Style */
+        .btn-add {
+            width: 100%;
+            background: var(--elevated-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: none;
+            border-radius: 13px;
+            padding: 16px;
+            color: var(--blue);
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.41px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            transition: opacity 0.15s ease;
+        }
+
+        .btn-add:active {
+            opacity: 0.5;
+        }
+
+        /* Section Header */
+        .section-header {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.35px;
+            margin-bottom: 12px;
+        }
+
+        /* Habit List */
+        .habit-list {
+            display: flex;
+            flex-direction: column;
             gap: 8px;
         }
 
-        .habit-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-            animation: fadeInUp 0.6s ease-out both;
-        }
-
-        .habit-card:hover {
-            border-color: var(--accent);
-            transform: translateX(4px);
+        .habit-item {
+            background: var(--elevated-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px;
+            padding: 16px;
         }
 
         .habit-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
-        .habit-name {
-            font-size: 18px;
+        .habit-title {
+            font-size: 17px;
             font-weight: 600;
+            letter-spacing: -0.41px;
         }
 
-        .streak-badge {
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
+        .habit-badge {
+            background: var(--orange);
+            color: #FFFFFF;
             font-size: 12px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: -0.08px;
         }
 
-        .progress-container {
-            margin-bottom: 16px;
+        /* Progress */
+        .progress-section {
+            margin-bottom: 14px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
         }
 
         .progress-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 13px;
+            color: var(--label-secondary);
+            letter-spacing: -0.08px;
+        }
+
+        .progress-track {
+            height: 4px;
+            background: var(--fill-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 10px;
         }
 
         .progress-bar {
-            height: 8px;
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent) 0%, #a78bfa 100%);
-            border-radius: 4px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            background: var(--blue);
+            border-radius: 2px;
+            transition: width 0.3s ease;
         }
 
         .progress-dots {
             display: flex;
             gap: 4px;
-            margin-top: 8px;
+            justify-content: center;
         }
 
         .progress-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
+            background: var(--fill-tertiary);
             border-radius: 50%;
-            background: var(--bg-tertiary);
-            transition: all 0.3s ease;
         }
 
-        .progress-dot.filled {
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
+        .progress-dot.active {
+            background: var(--blue);
         }
 
+        /* Action Buttons */
         .habit-actions {
             display: flex;
             gap: 8px;
@@ -218,128 +289,36 @@
 
         .btn {
             flex: 1;
-            padding: 12px;
             border: none;
             border-radius: 10px;
-            font-size: 14px;
+            padding: 12px;
+            font-size: 15px;
             font-weight: 600;
+            letter-spacing: -0.24px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            transition: opacity 0.15s ease;
+        }
+
+        .btn:active {
+            opacity: 0.5;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
+            background: var(--blue);
+            color: #FFFFFF;
         }
 
         .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--text-primary);
+            background: var(--fill-secondary);
+            color: var(--label-primary);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-            color: white;
+            background: var(--green);
+            color: #FFFFFF;
         }
 
-        .add-habit-btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--bg-secondary);
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
-        .add-habit-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: var(--bg-tertiary);
-        }
-
-        .ai-coach-section {
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            border: 1px solid var(--accent);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease-out 0.3s both;
-        }
-
-        .ai-coach-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        .ai-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .ai-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .ai-text {
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--text-secondary);
-            position: relative;
-            z-index: 1;
-        }
-
+        /* Modal - iOS Sheet */
         .modal {
             display: none;
             position: fixed;
@@ -347,145 +326,133 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.4);
             z-index: 1000;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
-            padding: 20px;
-            animation: fadeIn 0.3s ease-out;
         }
 
         .modal.active {
             display: flex;
+            animation: modalFadeIn 0.3s ease;
         }
 
-        .modal-content {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-            max-width: 400px;
-            width: 100%;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
+        @keyframes modalFadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .modal-sheet {
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 13px 13px 0 0;
+            width: 100%;
+            max-width: 428px;
+            padding: 20px 16px 34px 16px;
+            animation: slideUp 0.3s cubic-bezier(0.36, 0.66, 0.04, 1);
         }
 
         @keyframes slideUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-handle {
+            width: 36px;
+            height: 5px;
+            background: var(--fill-tertiary);
+            border-radius: 100px;
+            margin: 0 auto 20px auto;
         }
 
         .modal-title {
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.41px;
             margin-bottom: 16px;
+            text-align: center;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-label {
-            font-size: 14px;
-            color: var(--text-secondary);
+            font-size: 13px;
+            color: var(--label-secondary);
             margin-bottom: 8px;
             display: block;
+            letter-spacing: -0.08px;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
+            background: var(--fill-secondary);
+            border: none;
             border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: all 0.3s ease;
+            padding: 12px 16px;
+            color: var(--label-primary);
+            font-size: 17px;
+            letter-spacing: -0.41px;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            background: var(--fill-primary);
+        }
+
+        .form-input::placeholder {
+            color: var(--label-tertiary);
         }
 
         .modal-actions {
             display: flex;
             gap: 8px;
-            margin-top: 20px;
         }
 
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: var(--text-secondary);
         }
 
         .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
         }
 
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
+        .empty-text {
+            font-size: 15px;
+            color: var(--label-secondary);
+            letter-spacing: -0.24px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚡ Habit Tracker</h1>
-            <div class="date" id="currentDate"></div>
+    <div class="app-container">
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <div class="nav-title">Habits</div>
+            <div class="nav-subtitle" id="currentDate"></div>
         </div>
 
-        <div class="stats-grid">
+        <!-- Stats -->
+        <div class="stats-container">
             <div class="stat-card">
                 <div class="stat-value" id="totalHabits">0</div>
-                <div class="stat-label">Habits</div>
+                <div class="stat-label">Total</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="totalCompletions">0</div>
@@ -493,103 +460,96 @@
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="bestStreak">0</div>
-                <div class="stat-label">Best Streak</div>
+                <div class="stat-label">Streak</div>
             </div>
         </div>
 
-        <div class="ai-coach-section">
+        <!-- AI Coach -->
+        <div class="ai-section">
             <div class="ai-header">
-                <div class="ai-icon">🤖</div>
-                <div>
-                    <div style="font-weight: 600; margin-bottom: 4px;">AI Coach</div>
-                </div>
+                <div class="ai-icon">✨</div>
+                <div class="ai-label">Coach</div>
             </div>
-            <div class="ai-text" id="aiAdvice">
-                Add your first habit to get personalized coaching! 🚀
-            </div>
+            <div class="ai-text" id="aiAdvice">Add your first habit to get started</div>
         </div>
 
-        <button class="add-habit-btn" onclick="openAddModal()">
-            <span>➕</span>
-            <span>Add New Habit</span>
+        <!-- Add Button -->
+        <button class="btn-add" onclick="openAddModal()">
+            <span>+</span>
+            <span>New Habit</span>
         </button>
 
-        <div class="habits-section">
-            <div class="section-title">
-                <span>📋</span>
-                <span>Today's Habits</span>
-            </div>
-            <div id="habitsList"></div>
-        </div>
+        <!-- Habits List -->
+        <div class="section-header">Today</div>
+        <div class="habit-list" id="habitsList"></div>
     </div>
 
-    <!-- Add Habit Modal -->
-    <div class="modal" id="addModal">
-        <div class="modal-content">
-            <div class="modal-title">Add New Habit</div>
+    <!-- Modal -->
+    <div class="modal" id="addModal" onclick="handleModalClick(event)">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-title">New Habit</div>
             <div class="form-group">
-                <label class="form-label">Habit Name</label>
-                <input type="text" class="form-input" id="habitInput" placeholder="e.g., Morning Exercise">
+                <label class="form-label">What do you want to build?</label>
+                <input type="text" class="form-input" id="habitInput" placeholder="Morning exercise">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="addHabit()">
-                    <span>Add Habit</span>
-                </button>
+                <button class="btn btn-primary" onclick="addHabit()">Add</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.MainButton.hide();
 
-        // Data storage
         let habits = JSON.parse(localStorage.getItem('habits') || '[]');
         let completions = JSON.parse(localStorage.getItem('completions') || '{}');
 
-        // AI Tips database
         const aiTips = {
             welcome: [
-                "🌟 Start small! Building one solid habit is better than failing at ten.",
-                "💡 Pro tip: Stack new habits with existing ones for better success!",
-                "🎯 Focus on consistency over perfection. Missing one day won't break you!",
-                "⚡ Your brain forms habits in 21-66 days. Stay patient and persistent!"
+                "Start small. One habit is better than none.",
+                "Consistency beats intensity every time.",
+                "Stack new habits with existing routines.",
+                "Progress compounds. Just keep going."
             ],
             low_completion: [
-                "💪 Don't give up! Every expert was once a beginner who didn't quit.",
-                "🎯 Try reducing habit difficulty - start with just 2 minutes a day!",
-                "✨ Pair struggling habits with ones you already do consistently.",
-                "🚀 Break your habit into smaller steps - make it impossible to fail!"
+                "Every expert started as a beginner.",
+                "Try 2 minutes. Make it impossible to fail.",
+                "Pair this with something you already do.",
+                "Break it down. Smaller steps win."
             ],
             medium_completion: [
-                "📈 Solid progress! You're building real momentum here!",
-                "🔥 Keep this energy! You're closer to automatic habits than you think.",
-                "💎 Consistency is showing! The results compound over time.",
-                "⭐ You're in the growth zone - this is where magic happens!"
+                "You're building real momentum.",
+                "This is the growth zone. Stay here.",
+                "Consistency shows. Keep it up.",
+                "You're closer than you think."
             ],
             high_completion: [
-                "🏆 Incredible discipline! You're in the top 5% of people!",
-                "🌟 You're crushing it! These habits are becoming your identity.",
-                "👑 Legend status! Your consistency is truly inspiring!",
-                "💯 This is excellence! Keep showing others what's possible!"
+                "Top 5% discipline. Impressive.",
+                "This is becoming your identity.",
+                "Your consistency inspires others.",
+                "Excellence in action."
             ],
             streak_milestone: {
-                3: "🔥 3-day streak! The hardest part is behind you!",
-                7: "🏆 Full week! You're building serious momentum!",
-                14: "💎 Two weeks! This is becoming automatic!",
-                21: "🎊 21 days! Scientifically, this is now a habit!",
-                30: "👑 Full month! You've transformed your life!"
+                3: "3 days. The hard part is over.",
+                7: "Full week. Momentum is real.",
+                14: "Two weeks. It's becoming automatic.",
+                21: "21 days. This is a habit now.",
+                30: "Full month. Life changed."
             }
         };
 
-        // Initialize
-        updateDate();
-        renderHabits();
-        updateStats();
-        updateAIAdvice();
+        init();
+
+        function init() {
+            updateDate();
+            renderHabits();
+            updateStats();
+            updateAIAdvice();
+        }
 
         function updateDate() {
             const options = { weekday: 'long', month: 'long', day: 'numeric' };
@@ -629,56 +589,50 @@
             if (habits.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">🎯</div>
-                        <div>No habits yet. Add your first one!</div>
+                        <div class="empty-icon">○</div>
+                        <div class="empty-text">No habits yet</div>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = habits.map((habit, index) => {
+            container.innerHTML = habits.map((habit) => {
                 const { completed, streak } = getHabitProgress(habit.id);
                 const progress = (completed / 10) * 100;
                 const todayKey = `${habit.id}_${getTodayKey()}`;
                 const isDone = completions[todayKey];
 
-                const dots = Array.from({ length: 10 }, (_, i) => {
-                    return `<div class="progress-dot ${i < completed ? 'filled' : ''}"></div>`;
-                }).join('');
+                const dots = Array.from({ length: 10 }, (_, i) => 
+                    `<div class="progress-dot ${i < completed ? 'active' : ''}"></div>`
+                ).join('');
 
                 return `
-                    <div class="habit-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="habit-item fade-in">
                         <div class="habit-header">
-                            <div class="habit-name">${habit.name}</div>
-                            ${streak > 0 ? `
-                                <div class="streak-badge">
-                                    🔥 ${streak} day${streak > 1 ? 's' : ''}
-                                </div>
-                            ` : ''}
+                            <div class="habit-title">${habit.name}</div>
+                            ${streak > 0 ? `<div class="habit-badge">${streak}d</div>` : ''}
                         </div>
-                        <div class="progress-container">
-                            <div class="progress-label">
-                                <span>Progress</span>
-                                <span>${completed}/10 days</span>
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span class="progress-label">Progress</span>
+                                <span class="progress-label">${completed}/10</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            <div class="progress-track">
+                                <div class="progress-bar" style="width: ${progress}%"></div>
                             </div>
                             <div class="progress-dots">${dots}</div>
                         </div>
                         <div class="habit-actions">
                             ${!isDone ? `
                                 <button class="btn btn-primary" onclick="completeHabit('${habit.id}')">
-                                    <span>✓</span>
-                                    <span>Complete</span>
+                                    Complete
                                 </button>
                                 <button class="btn btn-secondary" onclick="skipHabit('${habit.id}')">
-                                    <span>⏭</span>
+                                    Skip
                                 </button>
                             ` : `
                                 <button class="btn btn-success" disabled>
-                                    <span>✓</span>
-                                    <span>Completed Today!</span>
+                                    ✓ Done
                                 </button>
                             `}
                         </div>
@@ -723,21 +677,15 @@
 
             const avgCompletion = totalCompleted / (totalHabits * 10);
             
-            // Check for streak milestones
             if (aiTips.streak_milestone[maxStreak]) {
                 document.getElementById('aiAdvice').textContent = aiTips.streak_milestone[maxStreak];
                 return;
             }
 
-            // Advice based on completion rate
             let advice;
-            if (avgCompletion >= 0.7) {
-                advice = aiTips.high_completion;
-            } else if (avgCompletion >= 0.4) {
-                advice = aiTips.medium_completion;
-            } else {
-                advice = aiTips.low_completion;
-            }
+            if (avgCompletion >= 0.7) advice = aiTips.high_completion;
+            else if (avgCompletion >= 0.4) advice = aiTips.medium_completion;
+            else advice = aiTips.low_completion;
 
             document.getElementById('aiAdvice').textContent = 
                 advice[Math.floor(Math.random() * advice.length)];
@@ -746,11 +694,17 @@
         function openAddModal() {
             document.getElementById('addModal').classList.add('active');
             document.getElementById('habitInput').value = '';
-            document.getElementById('habitInput').focus();
+            setTimeout(() => document.getElementById('habitInput').focus(), 100);
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('active');
+        }
+
+        function handleModalClick(event) {
+            if (event.target.id === 'addModal') {
+                closeAddModal();
+            }
         }
 
         function addHabit() {
@@ -758,7 +712,7 @@
             const name = input.value.trim();
 
             if (!name) {
-                tg.showAlert('Please enter a habit name');
+                tg.showAlert('Enter a habit name');
                 return;
             }
 
@@ -777,8 +731,8 @@
             updateAIAdvice();
 
             tg.showPopup({
-                title: '✅ Habit Added',
-                message: `"${name}" added successfully! Let's build that streak! 🔥`,
+                title: 'Added',
+                message: `"${name}" added. Let's build that streak.`,
                 buttons: [{type: 'ok'}]
             });
         }
@@ -795,32 +749,15 @@
             updateStats();
             updateAIAdvice();
 
-            const messages = [
-                `🎉 Great job! ${streak} day streak on "${habit.name}"!`,
-                `✨ Awesome! Keep that momentum on "${habit.name}"!`,
-                `💪 Well done! "${habit.name}" - ${streak} days strong!`,
-                `🔥 On fire! ${streak} day streak - you're unstoppable!`
-            ];
-
-            tg.showAlert(messages[Math.floor(Math.random() * messages.length)]);
+            tg.showAlert(`Done. ${streak} day streak on "${habit.name}".`);
         }
 
         function skipHabit(habitId) {
-            tg.showAlert('⏭ Skipped for today. Tomorrow is a fresh start! 💪');
+            tg.showAlert('Skipped. Tomorrow is a fresh start.');
         }
 
-        // Handle Enter key in input
         document.getElementById('habitInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addHabit();
-            }
-        });
-
-        // Close modal on background click
-        document.getElementById('addModal').addEventListener('click', (e) => {
-            if (e.target.id === 'addModal') {
-                closeAddModal();
-            }
+            if (e.key === 'Enter') addHabit();
         });
     </script>
 </body>
